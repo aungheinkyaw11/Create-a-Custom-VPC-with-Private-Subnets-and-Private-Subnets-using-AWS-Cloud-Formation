@@ -1,0 +1,284 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'Public Subnets in ap-southeast-1 Custom VPC'
+Resources:
+  CustomVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: '192.168.0.0/16'
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags: 
+        - Key : "Name"
+          Value: "CustomVpc"
+
+  CustomVpcIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: 
+        - Key : "Name"
+          Value: "CustomVpc IGW"
+
+  AttachCustomVPCandIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: 
+        !Ref CustomVpcIGW
+      VpcId: 
+        !Ref CustomVpc
+
+  CustomVpcRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: 
+        !Ref CustomVpc
+      Tags:
+        - Key: "Name"
+          Value: "CustomVpc Route Table"
+  
+  defaultRouteTabletoGIGW:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId:
+        !Ref CustomVpcIGW
+      RouteTableId: 
+        !Ref CustomVpcRouteTable
+
+# Elastic IPs  # only require for NAT GW
+
+  NatGwEIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: 'vpc'
+      Tags: 
+        - Key : "Name"
+          Value: "NAT Gateway EIP 1"
+
+  NatGwEIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: 'vpc'
+      Tags: 
+        - Key : "Name"
+          Value: "NAT Gateway EIP 2"
+
+  NatGwEIP3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: 'vpc'
+      Tags: 
+        - Key : "Name"
+          Value: "NAT Gateway EIP 3"
+
+# NAT GW
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        !GetAtt NatGwEIP1.AllocationId
+      ConnectivityType: 'public'
+      SubnetId:
+        !Ref privateSubnet1
+      Tags: 
+        - Key : "Name"
+          Value : "NatGateway1"
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        !GetAtt NatGwEIP2.AllocationId
+      ConnectivityType: 'public'
+      SubnetId:
+        !Ref privateSubnet2
+      Tags: 
+        - Key : "Name"
+          Value : "NatGateway2"
+
+  NatGateway3:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        !GetAtt NatGwEIP3.AllocationId
+      ConnectivityType: 'public'
+      SubnetId:
+        !Ref privateSubnet3
+      Tags: 
+        - Key : "Name"
+          Value : "NatGateway3"
+
+
+# Public Subnet
+
+  publicSubnet1:
+    Type : AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone : "ap-southeast-1a"
+      CidrBlock : "192.168.1.0/24" 
+      MapPublicIpOnLaunch : true
+      Tags : 
+        - Key : "Name"
+          Value : "public-Subnet1"
+      VpcId : 
+        !Ref CustomVpc
+    
+  publicSubnet1RTAssociation:    # RT association for public subnet1
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        !Ref CustomVpcRouteTable
+      SubnetId: 
+        !Ref publicSubnet1
+
+  publicSubnet2:
+    Type : AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone : "ap-southeast-1b"
+      CidrBlock : "192.168.2.0/24" 
+      MapPublicIpOnLaunch : true
+      Tags : 
+        - Key : "Name"
+          Value : "public-Subnet2"
+      VpcId : 
+        !Ref CustomVpc
+
+  publicSubnet2RTAssociation:    # RT association for public subnet2
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        !Ref CustomVpcRouteTable
+      SubnetId: 
+        !Ref publicSubnet2
+
+  publicSubnet3:
+    Type : AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone : "ap-southeast-1c"
+      CidrBlock : "192.168.3.0/24" 
+      MapPublicIpOnLaunch : true
+      Tags : 
+        - Key : "Name"
+          Value : "public-Subnet3"
+      VpcId : 
+        !Ref CustomVpc
+
+  publicSubnet3RTAssociation:    # RT association for public subnet3
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        !Ref CustomVpcRouteTable
+      SubnetId: 
+        !Ref publicSubnet3
+
+# Private Subnets
+
+  privateSubnet1:
+    Type : AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone : "ap-southeast-1a"
+      CidrBlock : "192.168.4.0/24" 
+      MapPublicIpOnLaunch : false
+      Tags : 
+        - Key : "Name"
+          Value : "privateSubnet1"
+      VpcId : 
+        !Ref CustomVpc
+
+  RouteTableForprivateSubnet1:    # Route table for private subnet1
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        !Ref CustomVpc
+      Tags:
+      - Key: "Name"
+        Value: "route table for privateSubnet1"
+
+  privateSubnet1RTAssociation:    # RT association for private subnet1
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        !Ref RouteTableForprivateSubnet1
+      SubnetId: 
+        !Ref privateSubnet1
+
+  privateSubnet1NATGatewayRoute: # Route for NAT Gateway in private subnet1
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableForprivateSubnet1
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref NatGateway1
+
+
+  privateSubnet2:
+    Type : AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone : "ap-southeast-1b"
+      CidrBlock : "192.168.5.0/24"  
+      MapPublicIpOnLaunch : false
+      Tags : 
+        - Key : "Name"
+          Value : "privateSubnet2"
+      VpcId : 
+        !Ref CustomVpc
+   
+  RouteTableForprivateSubnet2:    # Route table for private subnet2
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        !Ref CustomVpc
+      Tags:
+      - Key: "Name"
+        Value: "route table for privateSubnet2"
+  
+  privateSubnet2RTAssociation:    # RT association for private subnet2
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        !Ref RouteTableForprivateSubnet2
+      SubnetId: 
+        !Ref privateSubnet2
+
+  privateSubnet2NATGatewayRoute: # Route for NAT Gateway in private subnet1
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableForprivateSubnet2
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref NatGateway2
+
+
+  privateSubnet3:
+    Type : AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone : "ap-southeast-1c"
+      CidrBlock : "192.168.6.0/24"
+      MapPublicIpOnLaunch : false
+      Tags : 
+        - Key : "Name"
+          Value : "privateSubnet3"
+      VpcId : 
+        !Ref CustomVpc
+
+  RouteTableForprivateSubnet3:    #Route table for private subnet3
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        !Ref CustomVpc
+      Tags:
+      - Key: "Name"
+        Value: "route table for privateSubnet3"
+
+  privateSubnet3RTAssociation:    # RT association for private subnet3
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        !Ref RouteTableForprivateSubnet3
+      SubnetId: 
+        !Ref privateSubnet3
+
+  privateSubnet3ATGatewayRoute: # Route for NAT Gateway in private subnet1
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableForprivateSubnet3
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref NatGateway3
