@@ -11,17 +11,14 @@
 * [Step 4. Create Private Subnets and Associate Route Table](#step-4-create-private-subnets-and-associate-route-table)
 * [Step 5. Create NAT Gateway, Elastic IP, and Attach Private Route Table to NAT Gateway](#step-5-create-nat-gateway-elastic-ip-and-attach-private-route-table-to-nat-gateway)
 * [Verify](#verify)
----
 
 ## Architechure
 
----
 
 ![Untitled](images/Untitled.png)
 
 ## Components that we are going to create
 
----
 
 - Custom VPC
 - Internet Gateway
@@ -34,7 +31,6 @@
 
 ## Useful Command
 
----
 
 **Create Stack**
 
@@ -52,7 +48,6 @@
 
 ### Step 1. Create Custom VPC and Internet Gateway
 
----
 
 We start create **Custom VPC** and using CidrBlock `192.168.0.0/16`
 
@@ -97,7 +92,6 @@ Finally, **attach IGW to VPC**
 
 ### Step 2. Create public subnets, public route table and associate with public subnet
 
----
 
 Create 3 public subnets
 
@@ -198,7 +192,6 @@ Associate with public subnets
 
 ### Step 3. Create private route tables
 
----
 
 Create **private route table**
 
@@ -233,7 +226,6 @@ Create **private route table**
 
 ### Step 4. Create private subnets and associate route table
 
----
 
 Create **3 private subnets**
 
@@ -305,7 +297,6 @@ Associate route table with private subnets
 
 ### Step 5. Create NAT Gateway, Elastic IP and attach private route table to NAT Gateway
 
----
 
 We need to create **Elastic IP** to associate with NAT Gateway. We created 3 ElP not to single point of failture.
 
@@ -401,8 +392,6 @@ Attach **Private route table to NAT Gateway**
 ```
 
 ## Verify
-
----
 
 **CloudFormation Stack**
 
